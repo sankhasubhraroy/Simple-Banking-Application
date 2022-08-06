@@ -4,46 +4,44 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.sql.*;
 
-public class BankDetails {       // these class provides all BankingApplication method
+public class BankDetails {
     private static final int NULL = 0;
     static Connection con = connection.getConnection();
     static String sql;
 
-    public static boolean createAccount(String name, int passCode) // create account function
-    {
+    public static boolean createAccount(String name, int passCode) {
         try {
-            // validation
+            // Account validation
             if (name == null || passCode == NULL) {
-                System.out.println("All Field Required!");
+                System.out.println("     All Field Required!");
                 return false;
             }
-            // query
+            // SQL query
             Statement st = con.createStatement();
             sql = "INSERT INTO customer(cname,balance,pass_code) values('" + name + "',1000," + passCode + ")";
 
             // Execution
             if (st.executeUpdate(sql) == 1) {
-                System.out.println(name + ", Now You Login!");
+                System.out.println("\n     " + name + ", Your Account Created Successfully!");
                 return true;
             }
             // return
         } catch (SQLIntegrityConstraintViolationException e) {
-            System.out.println("Username Not Available!");
+            System.out.println("\n     Account Creation Failed. Account Already Exists!");
         } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
     }
 
-    public static boolean loginAccount(String user_id, int password) // login method
-    {
+    public static boolean loginAccount(String user_id, int password) {
         try {
-            // validation
+            // Account validation
             if (user_id == null || password == NULL) {
-                System.out.println("All Field Required!");
+                System.out.println("\n     All Field Required!");
                 return false;
             }
-            // query
+            // SQL query
             sql = "select * from customer where cname='" + user_id + "' and pass_code=" + password;
             PreparedStatement st = con.prepareStatement(sql);
             ResultSet rs = st.executeQuery();
@@ -60,31 +58,31 @@ public class BankDetails {       // these class provides all BankingApplication 
                 int receiveAc;
                 while (true) {
                     try {
-                        System.out.println("Hallo, " + rs.getString("cname"));
-                        System.out.println("1)Transfer Money");
-                        System.out.println("2)View Balance");
-                        System.out.println("5)LogOut");
+                        System.out.println("\nWelcome, " + rs.getString("cname") + "\n");
+                        System.out.println("1) Transfer Money");
+                        System.out.println("2) View Balance");
+                        System.out.println("3) Logout");
 
-                        System.out.print("Enter Choice:");
+                        System.out.print("\n     Enter Choice: ");
                         choice = Integer.parseInt(sc.readLine());
                         if (choice == 1) {
-                            System.out.print("Enter Receiver  A/c No:");
+                            System.out.print("     Enter Receiver  A/c No: ");
                             receiveAc = Integer.parseInt(sc.readLine());
-                            System.out.print("Enter Amount:");
+                            System.out.print("     Enter Amount: ");
                             amount = Integer.parseInt(sc.readLine());
 
                             if (BankDetails.transferMoney(senderAc, receiveAc, amount)) {
-                                System.out.println("MSG : Money Sent Successfully!\n");
+                                System.out.println("     Money Sent Successfully!\n");
                             } else {
-                                System.out.println("ERR :  Failed!\n");
+                                System.out.println("\n     Transaction Failed!\n");
                             }
                         } else if (choice == 2) {
 
                             BankDetails.getBalance(senderAc);
-                        } else if (choice == 5) {
+                        } else if (choice == 3) {
                             break;
                         } else {
-                            System.out.println("Err : Enter Valid input!\n");
+                            System.out.println("\n     Enter Valid input!\n");
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -96,29 +94,28 @@ public class BankDetails {       // these class provides all BankingApplication 
             // return
             return true;
         } catch (SQLIntegrityConstraintViolationException e) {
-            System.out.println("Username Not Available!");
+            System.out.println("     Username Not Available!");
         } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
     }
 
-    public static void getBalance(int acNo) // fetch balance method
-    {
+    public static void getBalance(int acNo) {
         try {
 
-            // query
+            // SQL query
             sql = "select * from customer where ac_no=" + acNo;
             PreparedStatement st = con.prepareStatement(sql);
 
             ResultSet rs = st.executeQuery(sql);
             System.out.println("-----------------------------------------------------------");
-            System.out.printf("%12s %10s %10s\n", "Account No", "Name", "Balance");
+            System.out.printf("%12s %12s %12s\n", "Account No", "Name", "Balance");
 
             // Execution
 
             while (rs.next()) {
-                System.out.printf("%12d %10s %10d.00\n", rs.getInt("ac_no"), rs.getString("cname"), rs.getInt("balance"));
+                System.out.printf("%12d %12s %10d.00\n", rs.getInt("ac_no"), rs.getString("cname"), rs.getInt("balance"));
             }
             System.out.println("-----------------------------------------------------------\n");
         } catch (Exception e) {
@@ -126,11 +123,10 @@ public class BankDetails {       // these class provides all BankingApplication 
         }
     }
 
-    public static boolean transferMoney(int sender_ac, int receiver_ac, int amount) throws SQLException // transfer money method
-    {
-        // validation
+    public static boolean transferMoney(int sender_ac, int receiver_ac, int amount) throws SQLException {
+        // Account validation
         if (receiver_ac == NULL || amount == NULL) {
-            System.out.println("All Field Required!");
+            System.out.println("\n     All Field Required!");
             return false;
         }
         try {
@@ -141,7 +137,7 @@ public class BankDetails {       // these class provides all BankingApplication 
 
             if (rs.next()) {
                 if (rs.getInt("balance") < amount) {
-                    System.out.println("Insufficient Balance!");
+                    System.out.println("\n     Insufficient Balance!");
                     return false;
                 }
             }
@@ -153,7 +149,7 @@ public class BankDetails {       // these class provides all BankingApplication 
 
             sql = "update customer set balance=balance-" + amount + " where ac_no=" + sender_ac;
             if (st.executeUpdate(sql) == 1) {
-                System.out.println("Amount Debited!");
+                System.out.println("\n     Amount Debited!");
             }
 
             // credit

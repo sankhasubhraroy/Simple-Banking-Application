@@ -3,7 +3,7 @@ package com.bank;
 import java.sql.*;
 
 public class connection {
-    static Connection con;                                        // Global Connection Object
+    static Connection con;// Global Connection Object
 
     public static Connection getConnection() {
         try {
