@@ -10,11 +10,10 @@ public class BankingApplication {
         BufferedReader sc = new BufferedReader(new InputStreamReader(System.in));
         String user_id;
         int password;
-        //int ac_no;
         int choice;
 
         while (true) {
-            System.out.println("\n---------- Welcome to SR Banking Portal ----------\n");
+            System.out.println("\n---------- Welcome to Digital Banking Portal ----------\n");
             System.out.println("1) Create Account");
             System.out.println("2) Login");
             System.out.println("3) Exit");
@@ -32,7 +31,7 @@ public class BankingApplication {
                             password = Integer.parseInt(sc.readLine());
 
                             if (BankDetails.createAccount(user_id, password)) {
-                                System.out.println("     Now, You Can Login!\n");
+                                System.out.println("     Kindly Login / Sign in For More Services!\n");
                             } else {
                                 System.out.println("     Choose Another Username!\n");
                             }
@@ -63,7 +62,7 @@ public class BankingApplication {
                         break;
 
                     default:
-                        System.out.println("Invalid Entry!\n");
+                        System.out.println("\n     Invalid Entry!\n");
                 }
 
                 if (choice == 3) {
@@ -71,7 +70,7 @@ public class BankingApplication {
                     break;
                 }
             } catch (Exception e) {
-                System.out.println("Enter Valid Entry!");
+                System.out.println("\n     Enter Valid Entry!");
             }
         }
         sc.close();

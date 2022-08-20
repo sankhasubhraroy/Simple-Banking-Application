@@ -6,7 +6,7 @@ import java.sql.*;
 
 public class BankDetails {
     private static final int NULL = 0;
-    static Connection con = connection.getConnection();
+    static Connection con = connection.connect();
     static String sql;
 
     public static boolean createAccount(String name, int passCode) {
@@ -25,7 +25,7 @@ public class BankDetails {
                 System.out.println("\n     " + name + ", Your Account Created Successfully!");
                 return true;
             }
-            // return
+            // Possible Exceptions
         } catch (SQLIntegrityConstraintViolationException e) {
             System.out.println("\n     Account Creation Failed. Account Already Exists!");
         } catch (Exception e) {
@@ -49,37 +49,57 @@ public class BankDetails {
             BufferedReader sc = new BufferedReader(new InputStreamReader(System.in));
 
             if (rs.next()) {
-                // after login menu driven interface method
+                // After login menu driven interface method
 
                 int choice;
                 int amount;
-                int senderAc = rs.getInt("ac_no");
+                int originalAc = rs.getInt("ac_no");
+                int receiverAc;
 
-                int receiveAc;
                 while (true) {
                     try {
                         System.out.println("\nWelcome, " + rs.getString("cname") + "\n");
                         System.out.println("1) Transfer Money");
-                        System.out.println("2) View Balance");
-                        System.out.println("3) Logout");
+                        System.out.println("2) Deposit Money");
+                        System.out.println("3) Withdraw Money");
+                        System.out.println("4) View Balance");
+                        System.out.println("5) Logout");
 
                         System.out.print("\n     Enter Choice: ");
                         choice = Integer.parseInt(sc.readLine());
+
                         if (choice == 1) {
                             System.out.print("     Enter Receiver  A/c No: ");
-                            receiveAc = Integer.parseInt(sc.readLine());
+                            receiverAc = Integer.parseInt(sc.readLine());
                             System.out.print("     Enter Amount: ");
                             amount = Integer.parseInt(sc.readLine());
 
-                            if (BankDetails.transferMoney(senderAc, receiveAc, amount)) {
-                                System.out.println("     Money Sent Successfully!\n");
+                            if (BankDetails.transferMoney(originalAc, receiverAc, amount)) {
+                                System.out.println("     Money Transferred Successfully!\n");
                             } else {
                                 System.out.println("\n     Transaction Failed!\n");
                             }
                         } else if (choice == 2) {
+                            System.out.print("     Enter Amount: ");
+                            amount = Integer.parseInt(sc.readLine());
 
-                            BankDetails.getBalance(senderAc);
+                            if (BankDetails.depositMoney(originalAc, amount)) {
+                                System.out.println("     Money Deposited Successfully!\n");
+                            } else {
+                                System.out.println("\n     Transaction Failed!\n");
+                            }
                         } else if (choice == 3) {
+                            System.out.print("     Enter Amount: ");
+                            amount = Integer.parseInt(sc.readLine());
+
+                            if (BankDetails.withdrawMoney(originalAc, amount)) {
+                                System.out.println("     Money Withdrawn Successfully!\n");
+                            } else {
+                                System.out.println("\n     Transaction Failed!\n");
+                            }
+                        } else if (choice == 4) {
+                            BankDetails.getBalance(originalAc);
+                        } else if (choice == 5) {
                             break;
                         } else {
                             System.out.println("\n     Enter Valid input!\n");
@@ -91,8 +111,9 @@ public class BankDetails {
             } else {
                 return false;
             }
-            // return
             return true;
+
+        // Possible Exceptions
         } catch (SQLIntegrityConstraintViolationException e) {
             System.out.println("     Username Not Available!");
         } catch (Exception e) {
@@ -103,21 +124,22 @@ public class BankDetails {
 
     public static void getBalance(int acNo) {
         try {
-
             // SQL query
             sql = "select * from customer where ac_no=" + acNo;
             PreparedStatement st = con.prepareStatement(sql);
-
             ResultSet rs = st.executeQuery(sql);
+
+            //Formatted Printing
             System.out.println("-----------------------------------------------------------");
             System.out.printf("%12s %12s %12s\n", "Account No", "Name", "Balance");
 
             // Execution
-
             while (rs.next()) {
                 System.out.printf("%12d %12s %10d.00\n", rs.getInt("ac_no"), rs.getString("cname"), rs.getInt("balance"));
             }
+
             System.out.println("-----------------------------------------------------------\n");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -135,6 +157,7 @@ public class BankDetails {
             PreparedStatement ps = con.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
+            // Checking Available Balance
             if (rs.next()) {
                 if (rs.getInt("balance") < amount) {
                     System.out.println("\n     Insufficient Balance!");
@@ -144,17 +167,87 @@ public class BankDetails {
 
             Statement st = con.createStatement();
 
-            // debit
+            // Deducting the money
             con.setSavepoint();
 
             sql = "update customer set balance=balance-" + amount + " where ac_no=" + sender_ac;
             if (st.executeUpdate(sql) == 1) {
-                System.out.println("\n     Amount Debited!");
+                System.out.println("\n     Amount Debited from A/c " + sender_ac);
             }
 
-            // credit
+            // Adding the money
             sql = "update customer set balance=balance+" + amount + " where ac_no=" + receiver_ac;
             st.executeUpdate(sql);
+
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            con.rollback();
+        }
+        // return
+        return false;
+    }
+
+    public static boolean depositMoney(int acc_no, int amount) throws SQLException {
+        // Account validation
+        if (amount == NULL) {
+            System.out.println("\n     All Field Required!");
+            return false;
+        }
+        try {
+            con.setAutoCommit(false);
+            con.setSavepoint();
+
+            // Adding the money
+            Statement st = con.createStatement();
+            sql = "update customer set balance=balance+" + amount + " where ac_no=" + acc_no;
+
+            if (st.executeUpdate(sql) == 1) {
+                System.out.println("\n     A/c " + acc_no + " credited by Rs. " + amount);
+            }
+
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            con.rollback();
+        }
+        // return
+        return false;
+    }
+
+    public static boolean withdrawMoney(int acc_no, int amount) throws SQLException {
+        // Account validation
+        if (amount == NULL) {
+            System.out.println("\n     All Field Required!");
+            return false;
+        }
+        try {
+            con.setAutoCommit(false);
+
+            sql = "select * from customer where ac_no=" + acc_no;
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            //Checking Available Balance
+            if (rs.next()) {
+                if (rs.getInt("balance") < amount) {
+                    System.out.println("\n     Insufficient Balance!");
+                    return false;
+                }
+            }
+
+
+            // Deducting the money
+            con.setSavepoint();
+
+            Statement st = con.createStatement();
+            sql = "update customer set balance=balance-" + amount + " where ac_no=" + acc_no;
+
+            if (st.executeUpdate(sql) == 1) {
+                System.out.println("\n     A/c " + acc_no + " debited by Rs. " + amount);
+            }
 
             con.commit();
             return true;
